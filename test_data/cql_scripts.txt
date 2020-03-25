@@ -1,0 +1,75 @@
+// The scripts are taken from the CQL Tutorial Notebook in DataStax Studio
+
+CREATE KEYSPACE videodb WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+USE videodb;
+
+CREATE TABLE videos (
+   videoid uuid,
+   videoname varchar,
+   username varchar,
+   description varchar,
+   location map<varchar,varchar>,
+   tags set<varchar>,
+   upload_date timestamp,
+   PRIMARY KEY (videoid)
+);
+
+CREATE TABLE video_rating (
+   videoid uuid,
+   rating_counter counter,
+   rating_total counter,
+   PRIMARY KEY (videoid)
+);
+
+CREATE TABLE video_event (
+   videoid uuid,
+   username varchar,
+   event varchar,
+   event_timestamp timeuuid,
+   video_timestamp bigint,
+   PRIMARY KEY ((videoid,username),event_timestamp,event)
+) WITH CLUSTERING ORDER BY (event_timestamp DESC,event ASC);
+
+INSERT INTO videos (videoid, videoname, username, description, location, tags, upload_date)
+VALUES (99051fe9-6a9c-46c2-b949-38ef78858dd0,'My funny cat','tcodd', 'My cat likes to play the piano! So funny.',{'US':'/us/vid/99/99051fe9-6a9c-46c2-b949-38ef78858dd0'},{'cats','piano','lol'},'2012-06-01 08:00:00');
+
+INSERT INTO videos (videoid, videoname, username, description, location, tags, upload_date)
+VALUES (b3a76c6b-7c7f-4af6-964f-803a9283c401,'Now my dog plays piano!','tcodd', 'My dog learned to play the piano because of the cat.',{'US':'/us/vid/b3/b3a76c6b-7c7f-4af6-964f-803a9283c401'},{'dogs','piano','lol'},'2012-08-30 16:50:00');
+
+INSERT INTO videos (videoid, videoname, username, description, location, tags, upload_date)
+VALUES (0c3f7e87-f6b6-41d2-9668-2b64d117102c,'An Introduction to Database Systems','cdate', 'An overview of my book',{'US':'/us/vid/0c/0c3f7e87-f6b6-41d2-9668-2b64d117102c'},{'database','relational','book'},'2012-09-03 10:30:00');
+
+// Video Rating counters
+UPDATE video_rating SET rating_counter = rating_counter + 1, rating_total = rating_total + 3
+WHERE videoid = 99051fe9-6a9c-46c2-b949-38ef78858dd0;
+
+UPDATE video_rating SET rating_counter = rating_counter + 1, rating_total = rating_total + 5
+WHERE videoid = b3a76c6b-7c7f-4af6-964f-803a9283c401;
+
+UPDATE video_rating SET rating_counter = rating_counter + 1, rating_total = rating_total + 4
+WHERE videoid = 0c3f7e87-f6b6-41d2-9668-2b64d117102c;
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (99051fe9-6a9c-46c2-b949-38ef78858dd0,'tcodd','start',now(), 0);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (99051fe9-6a9c-46c2-b949-38ef78858dd0,'tcodd','stop',now(), 30000);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (99051fe9-6a9c-46c2-b949-38ef78858dd0,'tcodd','start',now(), 3000);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (99051fe9-6a9c-46c2-b949-38ef78858dd0,'tcodd','stop',now(), 230000);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (b3a76c6b-7c7f-4af6-964f-803a9283c401,'cdate','start',now(), 0);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (b3a76c6b-7c7f-4af6-964f-803a9283c401,'cdate','stop',now(), 30000);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (b3a76c6b-7c7f-4af6-964f-803a9283c401,'cdate','start',now(), 3000);
+
+INSERT INTO video_event (videoid, username, event, event_timestamp, video_timestamp)
+VALUES (b3a76c6b-7c7f-4af6-964f-803a9283c401,'cdate','stop',now(), 230000);
